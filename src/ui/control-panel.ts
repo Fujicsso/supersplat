@@ -3,10 +3,9 @@ import { Events } from '../events';
 import { Element, ElementType } from '../element';
 import { Splat } from '../splat';
 import { version as appVersion } from '../../package.json';
-import { Vec3 } from 'playcanvas';
 
 class ControlPanel extends Panel {
-    constructor(events: Events, remoteStorageMode: boolean, args = {}) {
+    constructor(events: Events, remoteStorageMode: boolean, args = { }) {
         Object.assign(args, {
             headerText: `SUPERSPLAT v${appVersion}`,
             id: 'control-panel',
@@ -200,7 +199,7 @@ class ControlPanel extends Panel {
         selectGlobal.append(selectAllButton);
         selectGlobal.append(selectNoneButton);
         selectGlobal.append(invertSelectionButton);
-
+        
         // select by size
         const selectBySize = new Container({
             class: 'control-parent'
@@ -313,69 +312,6 @@ class ControlPanel extends Panel {
         selectByPlane.append(selectByPlaneAxis);
         selectByPlane.append(selectByPlaneOffset);
 
-        // select by box
-        const selectByBox = new Container({
-            class: 'control-parent'
-        });
-
-        const selectByBoxRadio = new RadioButton({
-            class: 'control-element'
-        });
-
-        const selectByBoxLabel = new Label({
-            class: 'control-label',
-            text: 'Box'
-        });
-
-        const selectByBoxAxis = new SelectInput({
-            class: 'control-element',
-            defaultValue: 'x',
-            options: [
-                { v: 'x', t: 'x' },
-                { v: 'y', t: 'y' },
-                { v: 'z', t: 'z' }
-            ],
-            enabled: false
-        });
-
-        const selectByBoxOffset = new NumericInput({
-            class: 'control-element-expand',
-            precision: 2,
-            enabled: false
-        });
-
-        // storage for the box position, since theres a limit on the parameter count on the UI
-        const boxPosition = new Vec3(0, 0, 0);
-
-
-        const selectByBoxDimention = new SelectInput({
-            class: 'control-element',
-            defaultValue: 'w',
-            options: [
-                { v: 'w', t: 'w' },
-                { v: 'h', t: 'h' },
-                { v: 'd', t: 'd' }
-            ],
-            enabled: false
-        });
-
-        const selectByBoxSize = new NumericInput({
-            class: 'control-element-expand',
-            precision: 2,
-            enabled: false
-        });
-
-        //storage for the box size, since theres a limit on the parameter count on the UI
-        const boxSize = new Vec3(0.5, 0.5, 0.5);
-
-        selectByBox.append(selectByBoxRadio);
-        selectByBox.append(selectByBoxLabel);
-        selectByBox.append(selectByBoxAxis);
-        selectByBox.append(selectByBoxOffset);
-        selectByBox.append(selectByBoxDimention);
-        selectByBox.append(selectByBoxSize);
-
-
         // set/add/remove
         const setAddRemove = new Container({
             class: 'control-parent'
@@ -435,7 +371,6 @@ class ControlPanel extends Panel {
         selectionPanel.append(selectByOpacity);
         selectionPanel.append(selectBySphere);
         selectionPanel.append(selectByPlane);
-        selectionPanel.append(selectByBox);
         selectionPanel.append(setAddRemove);
         selectionPanel.append(selectTools);
 
@@ -567,7 +502,7 @@ class ControlPanel extends Panel {
         });
 
         // radio logic
-        const radioGroup = [selectBySizeRadio, selectByOpacityRadio, selectBySphereRadio, selectByPlaneRadio, selectByBoxRadio];
+        const radioGroup = [selectBySizeRadio, selectByOpacityRadio, selectBySphereRadio, selectByPlaneRadio];
         radioGroup.forEach((radio, index) => {
             radio.on('change', () => {
                 if (radio.value) {
@@ -604,8 +539,7 @@ class ControlPanel extends Panel {
                 [selectBySizeSlider],
                 [selectByOpacitySlider],
                 [selectBySphereCenter],
-                [selectByPlaneAxis, selectByPlaneOffset],
-                [selectByBoxAxis, selectByBoxOffset, selectByBoxDimention, selectByBoxSize]
+                [selectByPlaneAxis, selectByPlaneOffset]
             ];
 
             controlSet.forEach((controls, controlsIndex) => {
@@ -616,7 +550,6 @@ class ControlPanel extends Panel {
 
             events.fire('select.bySpherePlacement', index === 2 ? selectBySphereCenter.value : [0, 0, 0, 0]);
             events.fire('select.byPlanePlacement', index === 3 ? axes[selectByPlaneAxis.value] : [0, 0, 0], selectByPlaneOffset.value);
-            events.fire('select.byBoxPlacement', index === 4 ? boxPosition : [0,0,0], index === 4 ? boxSize : [0,0,0]);
         });
 
         const performSelect = (op: string) => {
@@ -625,7 +558,6 @@ class ControlPanel extends Panel {
                 case 1: events.fire('select.byOpacity', op, selectByOpacitySlider.value); break;
                 case 2: events.fire('select.bySphere', op, selectBySphereCenter.value); break;
                 case 3: events.fire('select.byPlane', op, axes[selectByPlaneAxis.value], selectByPlaneOffset.value); break;
-                case 4: events.fire('select.byBox', op, boxPosition, boxSize); break;
             }
         };
 
@@ -691,87 +623,6 @@ class ControlPanel extends Panel {
 
         selectByPlaneOffset.on('change', () => {
             events.fire('select.byPlanePlacement', axes[selectByPlaneAxis.value], selectByPlaneOffset.value);
-        });
-
-        selectByBoxAxis.on('change', () => {
-            switch (selectByBoxAxis.value) {
-                case 'x':
-                    selectByBoxDimention.value = boxPosition.x;
-                    break;
-
-                case 'y':
-                    selectByBoxDimention.value = boxPosition.y;
-                    break;
-
-                case 'z':
-                    selectByBoxDimention.value = boxPosition.z;
-                    break;
-
-                default:
-                    break;
-            }
-            events.fire('select.byBoxPlacement', boxPosition, boxSize);
-        });
-
-        selectByBoxOffset.on('change', () => {
-            switch (selectByBoxAxis.value) {
-                case 'x':
-                    boxPosition.set(selectByBoxOffset.value, boxPosition.y, boxPosition.z);
-                    break;
-
-                case 'y':
-                    boxPosition.set(boxPosition.x, selectByBoxOffset.value, boxPosition.z);
-                    break;
-
-                case 'z':
-                    boxPosition.set(boxPosition.x, boxPosition.y, selectByBoxOffset.value);
-                    break;
-
-                default:
-                    break;
-            }
-            events.fire('select.byBoxPlacement', boxPosition, boxSize);
-        });
-
-        selectByBoxDimention.on('change', () => {
-            switch (selectByBoxDimention.value) {
-                case 'w':
-                    selectByBoxSize.value = boxSize.x;
-                    break;
-
-                case 'h':
-                    selectByBoxSize.value = boxSize.y;
-                    break;
-
-                case 'd':
-                    selectByBoxSize.value = boxSize.z;
-                    break;
-
-                default:
-                    break;
-            }
-            events.fire('select.byBoxPlacement', boxPosition, boxSize);
-        });
-
-        selectByBoxSize.on('change', () => {
-            console.log(selectByBoxDimention.value)
-            switch (selectByBoxDimention.value) {
-                case 'w':
-                    boxSize.set(selectByBoxSize.value, boxSize.y, boxSize.z);
-                    break;
-
-                case 'h':
-                    boxSize.set(boxSize.x, selectByBoxSize.value, boxSize.z);
-                    break;
-
-                case 'd':
-                    boxSize.set(boxSize.x, boxSize.y, selectByBoxSize.value);
-                    break;
-
-                default:
-                    break;
-            }
-            events.fire('select.byBoxPlacement', boxPosition, boxSize);
         });
 
         hideSelection.on('click', () => {
