@@ -33,6 +33,9 @@ const registerEditorEvents = (events: Events, editHistory: EditHistory, scene: S
     const debugSphereCenter = new Vec3();
     let debugSphereRadius = 0;
 
+    const debugBoxAxis = new Vec3();
+    const debugBoxDimentions = new Vec3();
+
     const debugPlane = new Vec3();
     let debugPlaneDistance = 0;
 
@@ -62,6 +65,12 @@ const registerEditorEvents = (events: Events, editHistory: EditHistory, scene: S
             }
 
             app.drawLines(lines, Color.RED);
+        }
+
+        if (debugBoxDimentions.length() > 0) {
+            //Calculate min and max points of the box, and draw it
+            app.drawWireAlignedBox(debugBoxAxis.clone().sub(debugBoxDimentions.clone().divScalar(2)),
+                debugBoxAxis.clone().add(debugBoxDimentions.clone().divScalar(2)), Color.RED)
         }
     });
 
@@ -248,6 +257,13 @@ const registerEditorEvents = (events: Events, editHistory: EditHistory, scene: S
         scene.forceRender = true;
     });
 
+    events.on('select.byBoxPlacement', (position: Vec3, size: Vec3) => {
+        debugBoxAxis.copy(position);
+        debugBoxDimentions.copy(size);
+
+        scene.forceRender = true;
+    });
+
     events.on('select.bySphere', (op: string, sphere: number[]) => {
         selectedSplats().forEach((splat) => {
             const splatData = splat.splatData;
@@ -265,6 +281,39 @@ const registerEditorEvents = (events: Events, editHistory: EditHistory, scene: S
             processSelection(state, op, (i) => {
                 vec2.set(x[i], y[i], z[i]);
                 return vec2.sub(vec).lengthSq() < radius2;
+            });
+
+            splat.updateState();
+        });
+    });
+
+    events.on('select.byBox', (op: string, position: Vec3, size: Vec3) => {
+        selectedSplats().forEach((splat) => {
+            const splatData = splat.splatData;
+            const state = splatData.getProp('state') as Uint8Array;
+            const x = splatData.getProp('x');
+            const y = splatData.getProp('y');
+            const z = splatData.getProp('z');
+
+            vec.copy(position);
+
+            mat.invert(splat.worldTransform);
+            mat.transformPoint(vec, vec);
+
+            // Calculate min and max points of the box
+            let minPos = vec.clone().sub(size.clone().divScalar(2));
+            let maxPos = vec.clone().add(size.clone().divScalar(2));
+
+            processSelection(state, op, (i) => {
+                vec2.set(x[i], y[i], z[i]);
+                let inside = true;
+
+                // Check if point is within bounds
+                if (minPos.x > vec2.x || vec2.x > maxPos.x) inside = false;
+                if (minPos.y > vec2.y || vec2.y > maxPos.y) inside = false;
+                if (minPos.z > vec2.z || vec2.z > maxPos.z) inside = false;
+
+                return inside;
             });
 
             splat.updateState();
