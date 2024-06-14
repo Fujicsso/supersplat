@@ -25,8 +25,8 @@ const countTotalSplats = (convertData: ConvertEntry[]) => {
 const getVertexProperties = (splatData: GSplatData) => {
     return new Set<string>(
         splatData.getElement('vertex')
-        .properties.filter((p: any) => p.storage)
-        .map((p: any) => p.name)
+            .properties.filter((p: any) => p.storage)
+            .map((p: any) => p.name)
     );
 };
 
@@ -58,14 +58,15 @@ const convertPly = (convertData: ConvertEntry[]) => {
     const hasPosition = ['x', 'y', 'z'].every(v => propNames.includes(v));
     const hasRotation = ['rot_0', 'rot_1', 'rot_2', 'rot_3'].every(v => propNames.includes(v));
     const hasScale = ['scale_0', 'scale_1', 'scale_2'].every(v => propNames.includes(v));
+    const hasSphericalHarmonics = ['f_dc_0', 'f_dc_3', 'f_dc_2'].every(v => propNames.includes(v));
 
     const headerText = [
         `ply`,
         `format binary_little_endian 1.0`,
         `element vertex ${totalSplats}`,
-         propNames.map(p => `property float ${p}`),
-         `end_header`,
-         ``
+        propNames.map(p => `property float ${p}`),
+        `end_header`,
+        ``
     ].flat().join('\n');
 
     const header = (new TextEncoder()).encode(headerText);
@@ -82,6 +83,8 @@ const convertPly = (convertData: ConvertEntry[]) => {
 
     let offset = header.byteLength;
 
+    console.log(convertData)
+
     for (let e = 0; e < convertData.length; ++e) {
         const entry = convertData[e];
         const splatData = entry.splatData;
@@ -94,6 +97,8 @@ const convertPly = (convertData: ConvertEntry[]) => {
         mat.mul2(mat, entry.modelMat);
         quat.setFromMat4(mat);
         mat.getScale(scale);
+
+        console.log(splatData);
 
         for (let i = 0; i < splatData.numSplats; ++i) {
             if ((state[i] & State.deleted) === State.deleted) continue;
@@ -122,6 +127,9 @@ const convertPly = (convertData: ConvertEntry[]) => {
             }
 
             // TODO: transform spherical harmonics
+            console.log(splat.f_dc_0);
+            if (hasSphericalHarmonics) {
+            }
 
             // write
             for (let j = 0; j < propNames.length; ++j) {
@@ -281,15 +289,15 @@ class Chunk {
 
         const pack111011 = (x: number, y: number, z: number) => {
             return packUnorm(x, 11) << 21 |
-                   packUnorm(y, 10) << 11 |
-                   packUnorm(z, 11);
+                packUnorm(y, 10) << 11 |
+                packUnorm(z, 11);
         };
 
         const pack8888 = (x: number, y: number, z: number, w: number) => {
             return packUnorm(x, 8) << 24 |
-                   packUnorm(y, 8) << 16 |
-                   packUnorm(z, 8) << 8 |
-                   packUnorm(w, 8);
+                packUnorm(y, 8) << 16 |
+                packUnorm(z, 8) << 8 |
+                packUnorm(w, 8);
         };
 
         // pack quaternion into 2,10,10,10
@@ -352,13 +360,13 @@ class Chunk {
 // sort the compressed indices into morton order
 const sortSplats = (indices: CompressedIndex[]) => {
     // https://fgiesen.wordpress.com/2009/12/13/decoding-morton-codes/
-    const encodeMorton3 = (x: number, y: number, z: number) : number => {
+    const encodeMorton3 = (x: number, y: number, z: number): number => {
         const Part1By2 = (x: number) => {
             x &= 0x000003ff;
             x = (x ^ (x << 16)) & 0xff0000ff;
-            x = (x ^ (x <<  8)) & 0x0300f00f;
-            x = (x ^ (x <<  4)) & 0x030c30c3;
-            x = (x ^ (x <<  2)) & 0x09249249;
+            x = (x ^ (x << 8)) & 0x0300f00f;
+            x = (x ^ (x << 4)) & 0x030c30c3;
+            x = (x ^ (x << 2)) & 0x09249249;
             return x;
         };
 

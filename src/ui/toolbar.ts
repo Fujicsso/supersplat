@@ -69,6 +69,11 @@ class Toolbar extends Container {
                     text: 'Splat file',
                     icon: 'E245',
                     onSelect: () => events.invoke('scene.export', 'splat')
+                }, {
+                    class: 'file-menu-item',
+                    text: 'Ply',
+                    icon: 'E245',
+                    onSelect: () => events.invoke('scene.export', 'ply')
                 }]
             }]
         });
@@ -189,7 +194,7 @@ class Toolbar extends Container {
         // github
         const github = new Button({
             class: 'toolbar-button',
-            icon: 'E259' 
+            icon: 'E259'
         });
         github.on('click', () => {
             window.open('https://github.com/playcanvas/supersplat', '_blank').focus();
