@@ -58,7 +58,6 @@ const convertPly = (convertData: ConvertEntry[], worldTransform: Mat4) => {
     const hasPosition = ['x', 'y', 'z'].every(v => propNames.includes(v));
     const hasRotation = ['rot_0', 'rot_1', 'rot_2', 'rot_3'].every(v => propNames.includes(v));
     const hasScale = ['scale_0', 'scale_1', 'scale_2'].every(v => propNames.includes(v));
-    const hasSphericalHarmonics = ['f_dc_0', 'f_dc_3', 'f_dc_2'].every(v => propNames.includes(v));
 
     const headerText = [
         `ply`,
@@ -82,8 +81,6 @@ const convertPly = (convertData: ConvertEntry[], worldTransform: Mat4) => {
     result.set(header);
 
     let offset = header.byteLength;
-
-    console.log(convertData)
 
     for (let e = 0; e < convertData.length; ++e) {
         const entry = convertData[e];
@@ -129,8 +126,6 @@ const convertPly = (convertData: ConvertEntry[], worldTransform: Mat4) => {
             }
 
             // TODO: transform spherical harmonics
-            if (hasSphericalHarmonics) {
-            }
 
             // write
             for (let j = 0; j < propNames.length; ++j) {
