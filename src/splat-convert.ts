@@ -47,7 +47,7 @@ const scale = new Vec3();
 const v = new Vec3();
 const q = new Quat();
 
-const convertPly = (convertData: ConvertEntry[]) => {
+const convertPly = (convertData: ConvertEntry[], worldTransform: Mat4) => {
     // count the number of non-deleted splats
     const totalSplats = countTotalSplats(convertData);
 
@@ -116,7 +116,9 @@ const convertPly = (convertData: ConvertEntry[]) => {
             }
 
             if (hasRotation) {
-                q.set(splat.rot_1, splat.rot_2, splat.rot_3, splat.rot_0).mul2(quat, q);
+                // Updated to first apply the world transform onto the quaternion and only then undo the loading transform. This way the Splat rotation should be saved along with the rotation of the model.
+                // This could also be applied to other transformation types, but thats beyond the scope of the question!
+                q.set(splat.rot_1, splat.rot_2, splat.rot_3, splat.rot_0).mul2(new Quat().setFromMat4(worldTransform), q).mul2(quat, q);
                 [splat.rot_1, splat.rot_2, splat.rot_3, splat.rot_0] = [q.x, q.y, q.z, q.w];
             }
 
@@ -127,7 +129,6 @@ const convertPly = (convertData: ConvertEntry[]) => {
             }
 
             // TODO: transform spherical harmonics
-            console.log(splat.f_dc_0);
             if (hasSphericalHarmonics) {
             }
 

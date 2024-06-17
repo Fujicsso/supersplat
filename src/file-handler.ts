@@ -252,6 +252,8 @@ const initFileHandler = async (scene: Scene, events: Events, canvas: HTMLCanvasE
     });
 
     const convertData = (splats: Splat[], type: ExportType) => {
+        // Get the world transform and pass it to the PLY converter to then apply to the splats
+        const splatsWorldTransform = splats[0]?.entity.getWorldTransform();
         const convertData = splats.map((splat) => {
             return {
                 splatData: splat.splatData,
@@ -261,7 +263,7 @@ const initFileHandler = async (scene: Scene, events: Events, canvas: HTMLCanvasE
 
         switch (type) {
             case 'ply':
-                return convertPly(convertData);
+                return convertPly(convertData, splatsWorldTransform);
             case 'compressed-ply':
                 return convertPlyCompressed(convertData);
             case 'splat':
